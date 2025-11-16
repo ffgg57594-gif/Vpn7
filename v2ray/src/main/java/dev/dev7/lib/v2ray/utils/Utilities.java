@@ -98,8 +98,8 @@ public class Utilities {
     }
 
     public static String normalizeV2rayFullConfig(String config){
-        if (Libv2ray.isXrayURI(config)){
-           return V2rayConstants.DEFAULT_FULL_JSON_CONFIG.replace(DEFAULT_OUT_BOUND_PLACE_IN_FULL_JSON_CONFIG,Libv2ray.getXrayOutboundFromURI(config));
+        if (Libv2ray.isV2rayURI(config)){
+           return V2rayConstants.DEFAULT_FULL_JSON_CONFIG.replace(DEFAULT_OUT_BOUND_PLACE_IN_FULL_JSON_CONFIG, Libv2ray.getV2rayOutboundFromURI(config));
         }
         return config;
     }
