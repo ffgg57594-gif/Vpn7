@@ -4,7 +4,7 @@ plugins {
 
 android {
     namespace 'dev.dev7.example'
-    compileSdk 34
+    compileSdk 35
 
     defaultConfig {
         applicationId "dev.dev7.example"
@@ -12,7 +12,6 @@ android {
         targetSdk 34
         versionCode 11
         versionName "8.1823"
-        setProperty("archivesBaseName", rootProject.name + "-" + versionName)
     }
 
     buildTypes {
@@ -21,9 +20,15 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
     }
+
+    packagingOptions {
+        doNotStrip "**/lib**.so"
+    }
+
     buildFeatures {
         buildConfig = true
     }
+
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_1_8
         targetCompatibility JavaVersion.VERSION_1_8

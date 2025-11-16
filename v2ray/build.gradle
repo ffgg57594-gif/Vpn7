@@ -4,16 +4,10 @@ plugins {
 
 android {
     namespace 'dev.dev7.lib.v2ray'
-    compileSdk 34
+    compileSdk 35
 
     defaultConfig {
         minSdk 21
-    }
-
-    sourceSets {
-        main {
-            jniLibs.srcDirs = ['libs']
-        }
     }
 
     buildTypes {
@@ -22,6 +16,11 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
     }
+
+    packagingOptions {
+        doNotStrip "**/lib**.so"
+    }
+
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_1_8
         targetCompatibility JavaVersion.VERSION_1_8
@@ -30,5 +29,5 @@ android {
 
 dependencies {
     implementation 'androidx.appcompat:appcompat:1.6.1'
-    implementation(group: "", name: "libv2ray", version: "", ext: "aar")
+    implementation fileTree(dir: 'libs', include: ['*.aar', '*.jar'], exclude: [])
 }
