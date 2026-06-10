@@ -1,6 +1,8 @@
 package dev.dev7.example;
 
 import static dev.dev7.lib.v2ray.utils.V2rayConstants.SERVICE_CONNECTION_STATE_BROADCAST_EXTRA;
+import static dev.dev7.lib.v2ray.utils.V2rayConstants.SERVICE_DOWNLOAD_SPEED_BROADCAST_EXTRA;
+import static dev.dev7.lib.v2ray.utils.V2rayConstants.SERVICE_UPLOAD_SPEED_BROADCAST_EXTRA;
 import static dev.dev7.lib.v2ray.utils.V2rayConstants.V2RAY_SERVICE_STATICS_BROADCAST_INTENT;
 
 import android.annotation.SuppressLint;
@@ -13,6 +15,7 @@ import android.os.Build;
 import android.os.Bundle;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
@@ -27,6 +30,7 @@ public class MainActivity extends AppCompatActivity {
     private Button btnConnect;
     private EditText etServer;
     private EditText etSni;
+    private TextView tvLogs;
     private SharedPreferences sharedPreferences;
     private BroadcastReceiver v2rayBroadCastReceiver;
 
@@ -36,27 +40,23 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         
-        // تهيئة محرك V2ray
         if (savedInstanceState == null) {
             V2rayController.init(this, R.drawable.ic_launcher, "My Custom VPN");
         }
 
-        // ربط العناصر بالواجهة
         btnConnect = findViewById(R.id.btn_connect);
         etServer = findViewById(R.id.et_server);
         etSni = findViewById(R.id.et_sni);
+        tvLogs = findViewById(R.id.tv_logs);
 
-        // تهيئة الذاكرة لحفظ السيرفر والـ SNI
         sharedPreferences = getSharedPreferences("vpn_conf", MODE_PRIVATE);
         etServer.setText(sharedPreferences.getString("saved_server", ""));
         etSni.setText(sharedPreferences.getString("saved_sni", ""));
 
-        // برمجة زر الاتصال
         btnConnect.setOnClickListener(view -> {
-            
-            // إذا كان متصلاً بالفعل، قم بقطع الاتصال
             if (V2rayController.getConnectionState() != V2rayConstants.CONNECTION_STATES.DISCONNECTED) {
                 V2rayController.stopV2ray(this);
+                tvLogs.append("\n[+] تم طلب قطع الاتصال.");
                 return;
             }
 
@@ -64,18 +64,16 @@ public class MainActivity extends AppCompatActivity {
             String sniInput = etSni.getText().toString().trim();
 
             if (serverInput.isEmpty() || sniInput.isEmpty()) {
-                Toast.makeText(this, "يرجى ملء جميع الخانات", Toast.LENGTH_SHORT).show();
+                Toast.makeText(this, "يرجى ملء الخانات", Toast.LENGTH_SHORT).show();
                 return;
             }
 
-            // حفظ البيانات لعدم كتابتها مرة أخرى
             sharedPreferences.edit()
                     .putString("saved_server", serverInput)
                     .putString("saved_sni", sniInput)
                     .apply();
 
             try {
-                // تفكيك صيغتك: Ip:port@name:password
                 String[] parts = serverInput.split("@");
                 String[] ipPort = parts[0].split(":");
                 String[] namePass = parts[1].split(":");
@@ -83,55 +81,66 @@ public class MainActivity extends AppCompatActivity {
                 String ip = ipPort[0];
                 String port = ipPort[1];
                 String name = namePass[0];
-                String password = namePass[1]; // هذا هو الـ UUID
+                String password = namePass[1];
 
-                // دمج البيانات لصناعة رابط Vless
+                // تمت إضافة host و path لضمان الاتصال الصحيح وتدفق البيانات
                 String vlessUri = "vless://" + password + "@" + ip + ":" + port + 
                                   "?encryption=none&security=tls&sni=" + sniInput + 
-                                  "&type=ws#" + name;
+                                  "&type=ws&host=" + sniInput + "&path=%2F#" + name;
 
-                // إرسال الرابط لمحرك الـ VPN لبدء الاتصال
+                tvLogs.setText("=== بدء عملية الاتصال ===\n");
+                tvLogs.append("-> IP: " + ip + "\n");
+                tvLogs.append("-> Port: " + port + "\n");
+                tvLogs.append("-> SNI: " + sniInput + "\n");
+                tvLogs.append("\n[+] جاري الاتصال بالمحرك...\n");
+
                 V2rayController.startV2ray(this, "My Custom VPN", vlessUri, null);
 
             } catch (Exception e) {
-                Toast.makeText(this, "خطأ في الصيغة! استخدم: Ip:port@name:password", Toast.LENGTH_LONG).show();
+                tvLogs.setText("❌ خطأ في تفكيك البيانات! تأكد من استخدام الصيغة:\nIp:port@name:password");
             }
         });
 
-        // التحقق من حالة الاتصال عند فتح التطبيق
         updateButtonState(V2rayController.getConnectionState());
 
-        // استقبال تحديثات حالة الاتصال من المحرك في الخلفية
         v2rayBroadCastReceiver = new BroadcastReceiver() {
             @Override
             public void onReceive(Context context, Intent intent) {
                 runOnUiThread(() -> {
                     V2rayConstants.CONNECTION_STATES state = (V2rayConstants.CONNECTION_STATES) Objects.requireNonNull(intent.getExtras().getSerializable(SERVICE_CONNECTION_STATE_BROADCAST_EXTRA));
                     updateButtonState(state);
+
+                    // طباعة السرعة في السجل للتأكد من سحب البيانات
+                    if (state == V2rayConstants.CONNECTION_STATES.CONNECTED) {
+                        String up = intent.getExtras().getString(SERVICE_UPLOAD_SPEED_BROADCAST_EXTRA);
+                        String down = intent.getExtras().getString(SERVICE_DOWNLOAD_SPEED_BROADCAST_EXTRA);
+                        tvLogs.setText("الحالة: متصل ✅\n↑ رفع: " + up + " | ↓ تحميل: " + down);
+                    }
                 });
             }
         };
 
-        // تسجيل المستقبل (Receiver) بناءً على إصدار الأندرويد
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            registerReceiver(v2rayBroadCastReceiver, new IntentFilter(V2RAY_SERVICE_STATICS_BROADCAST_INTENT), RECEIVER_EXPORTED);
+            registerReceiver(v2rayBroadCastReceiver, new IntentFilter(V2RAY_SERVICE_STATICS_BROADCAST_INTENT), Context.RECEIVER_EXPORTED);
         } else {
             registerReceiver(v2rayBroadCastReceiver, new IntentFilter(V2RAY_SERVICE_STATICS_BROADCAST_INTENT));
         }
     }
 
-    // دالة لتحديث شكل الزر بناءً على حالة الاتصال
     @SuppressLint("SetTextI18n")
     private void updateButtonState(V2rayConstants.CONNECTION_STATES state) {
         switch (state) {
             case CONNECTED:
-                btnConnect.setText("متصل (اضغط لقطع الاتصال)");
+                btnConnect.setText("قطع الاتصال");
+                btnConnect.setBackgroundColor(0xFFFF0000); // لون أحمر عند الاتصال
                 break;
             case DISCONNECTED:
                 btnConnect.setText("اتصال");
+                btnConnect.setBackgroundColor(0xFF007BFF); // أزرق
                 break;
             case CONNECTING:
                 btnConnect.setText("جاري الاتصال...");
+                btnConnect.setBackgroundColor(0xFFFFA500); // برتقالي
                 break;
             default:
                 break;
