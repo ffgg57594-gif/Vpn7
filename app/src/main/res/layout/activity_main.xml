@@ -3,18 +3,16 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    android:padding="24dp"
-    android:gravity="center"
+    android:padding="20dp"
     android:background="#F5F5F5">
 
     <TextView
-        android:layout_width="wrap_content"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="My Custom VPN"
-        android:textSize="28sp"
-        android:textStyle="bold"
+        android:text="1. بيانات السيرفر (Ip:port@name:password)"
         android:textColor="#333333"
-        android:layout_marginBottom="40dp"/>
+        android:textStyle="bold"
+        android:layout_marginBottom="5dp"/>
 
     <EditText
         android:id="@+id/et_server"
@@ -22,9 +20,17 @@
         android:layout_height="60dp"
         android:background="#FFFFFF"
         android:padding="15dp"
-        android:hint="السيرفر (Ip:port@name:password)"
+        android:hint="مثال: 192.168.1.1:443@MyServer:12345"
         android:textColor="#000000"
-        android:layout_marginBottom="16dp"/>
+        android:layout_marginBottom="15dp"/>
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="2. الـ SNI / Bug Host"
+        android:textColor="#333333"
+        android:textStyle="bold"
+        android:layout_marginBottom="5dp"/>
 
     <EditText
         android:id="@+id/et_sni"
@@ -32,9 +38,9 @@
         android:layout_height="60dp"
         android:background="#FFFFFF"
         android:padding="15dp"
-        android:hint="SNI / Bug Host"
+        android:hint="مثال: bug.com"
         android:textColor="#000000"
-        android:layout_marginBottom="30dp"/>
+        android:layout_marginBottom="25dp"/>
 
     <Button
         android:id="@+id/btn_connect"
@@ -44,5 +50,29 @@
         android:textSize="20sp"
         android:backgroundTint="#007BFF"
         android:textColor="#FFFFFF" />
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="سجل الأحداث (Logs):"
+        android:textColor="#333333"
+        android:textStyle="bold"
+        android:layout_marginTop="20dp"
+        android:layout_marginBottom="5dp"/>
+
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="#E0E0E0"
+        android:padding="10dp">
+        
+        <TextView
+            android:id="@+id/tv_logs"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textColor="#000000"
+            android:textSize="14sp"
+            android:text="في انتظار الاتصال..."/>
+    </ScrollView>
 
 </LinearLayout>
